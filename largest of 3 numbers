@@ -1,0 +1,15 @@
+#include <iostream>
+using namespace std;
+int main()
+{
+    int a = 3, b = 7,c = 9;
+    if (a>b,a>c){
+        cout<<"largest number a";
+    }
+    else if (b>a,b>c){
+            cout<<"largest number is b";
+    }else{
+        cout<<"largest number is c";
+    }
+    return 0;
+}
