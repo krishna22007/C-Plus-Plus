@@ -1,0 +1,225 @@
+TASK 1 – Understand the Problemand IdentifytheObjectsObject-Oriented Analysis:-
+PROGRAM CODE;- #include
+#include
+class SmartCard {
+private:
+long long balancePaise;
+public:
+explicit SmartCard(long long initialBalance) :
+balancePaise(initialBalance) {}
+long long getBalance() const { return balancePaise; }
+void deduct(long long amount) { balancePaise -= amount;
+};
+int main() {
+std::cout << "=== Task 1: OOP Analysis & Architecture ==="<<std::endl;
+SmartCard card(10000); // Rs 100.00
+std::cout << "Initial Card Balance: Rs " << card.getBalance() / 100.00<< std::endl;
+std::cout << "Objects identified: SmartCard, Journey, FareTable, Passenger" << std::endl;
+return 0;
+}
+TASK 2 – Use Tokens, Keywords, Identifiers andConstants Correctly -------------------------------------------------------------------------------------------------------------------------
+Discussion on Tokens and Constants
+Five Kinds of Tokens:
+Keywords: constexpr, enum, class, long, return. Identifiers: BASE_PAISE, Zone, canTravel. Constants: 1000, 5000, 20.
+Operators: +, -, ==, &&. Punctuators: {, }, ;, ,. #define vs const vs constexpr: #define is a preprocessor macro lacking typesafety and scope. const defines run-time constants. constexpr enforces
+compile-time evaluation, guaranteeing memory efficiency and zero runtimeoverhead, making it ideal for static fare tables. enum vs enum class: Standard enums leak enumerators into the enclosingscope and allow implicit integer conversions. enum class provides strongscoping (Zone::Inner) and strict type safety. PROGRAM CODE:-
+#include
+#include
+class SmartCard {
+private:
+long long balancePaise;
+public:
+explicit SmartCard(long long initialBalance) : balancePaise(initialBalance) {}
+long long getBalance() const { return balancePaise; }
+void deduct(long long amount) { balancePaise -= amount; }
+};
+int main() {
+std::cout << "=== Task 1: OOP Analysis & Architecture ===" << std::endl;
+SmartCard card(10000); // Rs 100.00
+std::cout << "Initial Card Balance: Rs " << card.getBalance() / 100.00 <<std::endl;
+std::cout << "Objects identified: SmartCard, Journey, FareTable, Passenger"<< std::endl;
+Task 3: Data Types and Paisa Storage Validation-------------------------------------------------------------------------------------------------------------------------
+PROGRAM CODE:- #include
+#include
+int main() {
+std::cout << "=== Task 3: Data Types & Sizes ===" << std::endl;
+std::cout << "sizeof(long long) for Money: " << sizeof(long long) << " bytes"<< std::endl;
+std::cout << "sizeof(int) for Hours/Zones: " << sizeof(int) << " bytes" <<std::endl;
+std::cout << "sizeof(bool) for Flags: " << sizeof(bool) << " byte" << std::endl;
+std::cout << "LLONG_MAX limit check: " << LLONG_MAX << std::endl;
+return 0;
+}
+Task 4: Control Implicit Conversions(static_cast)-------------------------------------------------------------------------------------------------------------------------
+PROGRAM CODE:-
+// Task 04: Control Implicit Conversions
+#include
+int main() {
+std::cout << "=== Task 4: Implicit vs Explicit Conversions ===" << std::endl;
+int a = 7, b = 2;
+double c = a / b; // Integer division truncated
+double d = static_cast(a) / b; // Explicit cast
+std::cout << "Implicit division result: " << c << std::endl;
+std::cout << "Explicit cast result: " << d << std::endl;
+return 0;
+}
+Task 5: Operators, Precedence &PeakExpressions:- PROGRAM CODE:--------------------------------------------------------------------------------------------------------------------------
+#include
+int main() {
+std::cout << "=== Task 5: Operator Precedence & Peak Logic ===" <<std::endl;
+int hour = 9;
+bool isPeak = (hour >= 8 && hour < 10) || (hour >= 17 && hour < 20);
+std::cout << "Hour " << hour << " is peak time? " << (isPeak ? "YES" : "NO") << std::endl;
+int x = 5, y = 3;
+int z = x++ + ++y;
+std::cout << "Post/Pre increment evaluation z: " << z << ", x: " << x <<", y: "<< y << std::endl;
+return 0;
+}
+Task 6: Control Structures &Fare
+Computation:- PROGRAM CODE:- -------------------------------------------------------------------------------------------------------------------------
+#include<iostream>
+enum class Zone { Inner, Middle, Outer };
+constexpr long long BASE_PAISE[] = {1000, 2000, 3000};
+constexpr int PEAK_SURCHARGE_PERCENT = 20;
+constexpr long long MIN_BALANCE_PAISE = 5000;
+long long fare(Zone z, bool peak) {
+long long base = 0;
+switch (z) {
+case Zone::Inner: base = BASE_PAISE[0]; break;
+case Zone::Middle: base = BASE_PAISE[1]; break;
+case Zone::Outer: base = BASE_PAISE[2]; break;
+}
+if (peak) {
+base += (base * PEAK_SURCHARGE_PERCENT) / 100;
+}
+return base;
+}
+bool canTravel(long long balance, long long f) {
+return (balance - f) >= MIN_BALANCE_PAISE;
+}
+int main() {
+std::cout << "=== Task 6: Switch & Control Structures ===" << std::endl;
+long long balance = 10000;
+struct Trip { Zone zone; bool peak; };
+Trip trips[] = {{Zone::Inner, false}, {Zone::Outer, true}, {Zone::Middle, false}};
+for (const Trip& t : trips) {
+long long f = fare(t.zone, t.peak);
+if (canTravel(balance, f)) {
+balance -= f;
+std::cout << "Fare Rs " << f / 100 << '.' << std::setw(2) << std::setfill('0')
+<< f % 100;
+} else {
+std::cout << "Denied (low balance)";
+}
+std::cout << " balance Rs " << balance / 100 << std::endl;
+}
+return 0;
+}
+Task 7: Procedural vs. Object-OrientedStyle:-PROGRAM CODE:--------------------------------------------------------------------------------------------------------------------------
+#include
+class SmartCard {
+private:
+long long balancePaise;
+public:
+explicit SmartCard(long long initialBalance) : balancePaise(initialBalance) {}
+bool canTravel(long long fareAmount, long long minBalance) const {
+return (balancePaise - fareAmount) >= minBalance;
+}
+void deduct(long long amount) { balancePaise -= amount; }
+long long getBalance() const { return balancePaise; }
+};
+int main() {
+std::cout << "=== Task 7: Object-Oriented Encapsulation ===" << std::endl;
+SmartCard card(8000);
+long long fare = 2000;
+if (card.canTravel(fare, 5000)) {
+card.deduct(fare);
+std::cout << "Deduction successful. New balance: Rs " << card.getBalance()
+/ 100 << std::endl;
+} else {
+std::cout << "Travel denied due to minimum balance constraint." <<std::endl;
+}
+return 0;
+}
+Task 8: Safe Input Handling &Formatting:-PROGRAM CODE:--------------------------------------------------------------------------------------------------------------------------
+#include
+#include
+#include
+int main() {
+std::cout << "=== Task 8: Safe I/O & Formatting ===" << std::endl;
+int zoneChoice = 0;
+std::cout << "Select Zone (1: Inner, 2: Middle, 3: Outer): ";
+if (!(std::cin >> zoneChoice)) {
+std::cin.clear();
+std::cin.ignore(std::numeric_limitsstd::streamsize::max(), '\n');
+std::cout << "Invalid input detected and cleared safely." << std::endl;
+} else {
+std::cout << "Zone code accepted: " << zoneChoice << std::endl;
+}
+return 0;
+}
+Task 9: Complete Implementation &Test Matrix:--------------------------------------------------------------------------------------------------------------------------
+PROGRAM CODE:- #include
+#include
+constexpr long long computeFare(int zone, bool peak) {
+long long base = (zone == 1) ? 1000 : (zone == 2) ? 2000 : 3000;
+if (peak) base += (base * 20) / 100;
+return base;
+}
+int main() {
+std::cout << "=== Task 9: Automated Test Matrix ===" << std::endl;
+assert(computeFare(1, false) == 1000);
+assert(computeFare(3, true) == 3600);
+std::cout << "All automated test cases passed successfully!" << std::endl;
+return 0;
+}
+Task 10: Expectation vs. ExecutionScaleCheck:--------------------------------------------------------------------------------------------------------------------------
+PROGRAM CODE:- #include
+int main() {
+std::cout << "=== Task 10: Scale Accumulation Validation ===" << std::endl;
+long long totalPaise = 0;
+long long sampleFare = 2000;
+int journeys = 3000000;
+for (int i = 0; i < journeys; ++i) {
+totalPaise += sampleFare;
+}
+std::cout << "Total collection for " << journeys << " journeys: Rs " <<totalPaise / 100 << std::endl;
+std::cout << "Integer paise prevents float rounding errors at large scale."<<std::endl;
+return 0;
+}
+Task 11: Final Design Recommendation&Architecture:- PROGRAM CODE:--------------------------------------------------------------------------------------------------------------------------
+#include
+int main() {
+std::cout << "=== Task 11: Final Architectural Defense ===" << std::endl;
+std::cout << "Recommendation: Combine constexpr fare tables, strong enumclasses," << std::endl;
+std::cout << "encapsulated SmartCard state, and integer-paise accountingforzero defects." << std::endl;
+return 0;
+}
+Task 12: Day-4 Design Challenge (4thZone,
+Discounts & Passes):- PROGRAM CODE:-------------------------------------------------------------------------------------------------------------------------
+#include
+enum class Zone { Inner = 1, Middle, Outer, Airport };
+constexpr long long BASE_PAISE[] = { 1000, 2000, 3000, 6000 };
+class Pass {
+private:
+Zone z1, z2;
+public:
+Pass(Zone a, Zone b) : z1(a), z2(b) {}
+bool covers(Zone z) const { return z == z1 || z == z2; }
+};
+long long getFare(Zone z, bool peak, bool weekend, const Pass* pass) {
+if (pass && pass->covers(z)) return 0; // Covered by monthly pass
+long long base = BASE_PAISE[static_cast(z) - 1];
+if (weekend) {
+base -= (base * 10) / 100; // 10% Weekend discount
+} else if (peak) {
+base += (base * 20) / 100; // 20% Peak surcharge
+}
+return base;
+}
+int main() {
+std::cout << "=== Task 12: Day-4 Design Challenge ===" << std::endl;
+Pass myPass(Zone::Inner, Zone::Middle);
+std::cout << "Airport Zone Fare (Weekend): Rs " << getFare(Zone::Airport, false, true, nullptr) / 100.0 << std::endl;
+std::cout << "Inner Zone Fare with Pass: Rs " << getFare(Zone::Inner, true, false, &myPass) / 100.0 << std::endl;
+return 0;
+}
