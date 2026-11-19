@@ -1,0 +1,244 @@
+#Q1: Call by value, reference and pointer:-
+#include <iostream>
+using namespace std;
+
+void byValue(long long fee, int percent)      { fee -= fee * percent / 100; }     // copy
+void byReference(long long& fee, int percent) { fee -= fee * percent / 100; }     // original
+void byPointer(long long* fee, int percent)   { *fee -= *fee * percent / 100; }   // via address
+long long applied(long long fee, int percent) { return fee - fee * percent / 100; } // returns new fee
+
+int main()
+{
+    long long fee = 45000;
+    byValue(fee, 10);      cout << "by value     : " << fee << '\n';
+    byReference(fee, 10);  cout << "by reference : " << fee << '\n';
+    byPointer(&fee, 10);   cout << "by pointer   : " << fee << '\n';
+
+    long long f2 = applied(applied(45000, 10), 15);   // merit 10% then sports 15%
+    cout << "merit+sports (returning style): " << f2 << '\n';
+}
+#Q2: Return by reference and its dangers:------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int& highest(int marks[], int n)                  // reference INTO the array
+{
+    int best = 0;
+    for (int i = 1; i < n; i++) if (marks[i] > marks[best]) best = i;
+    return marks[best];
+}
+const int& highestConst(const int marks[], int n) // read-only reference
+{
+    int best = 0;
+    for (int i = 1; i < n; i++) if (marks[i] > marks[best]) best = i;
+    return marks[best];
+}
+int highestCopy(const int marks[], int n) { return highestConst(marks, n); }  // a copy
+
+int& badFunction() { int local = 42; return local; }   // DANGER: local dies at the closing brace
+
+int main()
+{
+    int marks[5] = {55, 88, 72, 91, 60};
+    highest(marks, 5) += 2;                        // moderation +2 directly on the array
+    for (int m : marks) cout << m << ' ';  cout << '\n';
+
+    highest(marks, 5) = 100;                       // call on the LEFT of '='
+    for (int m : marks) cout << m << ' ';  cout << '\n';
+
+    int copy = highestCopy(marks, 5);  copy += 50; // changes only the copy
+    cout << "copy = " << copy << ", array top still " << highestConst(marks, 5) << '\n';
+
+    (void)&badFunction;                            // never call it: undefined behaviour
+    vector<int> v = {55, 88, 72};
+    int* before = &v[0];
+    for (int i = 0; i < 1000; i++) v.push_back(i);
+    cout << (before == &v[0] ? "vector did NOT move"
+                             : "vector MOVED: old reference/pointer is now dangling") << '\n';
+}
+#Q3: Default arguments and overloading Why the original didn’t compile:--------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+struct Parcel { double kg; bool express; bool insured; };
+
+double charge(int grams) { cout << "[int grams]   "; return 20 + 0.02 * grams; }
+
+double charge(double kg, bool express = false, bool insured = false)   // defaults from the RIGHT
+{
+    cout << "[double kg]   ";
+    double c = 50 * kg;
+    if (express) c += 30;
+    if (insured) c += 20;
+    return c;
+}
+
+double charge(const Parcel& p) { cout << "[Parcel]      "; return charge(p.kg, p.express, p.insured); }
+
+int main()
+{
+    cout << charge(500)            << '\n';
+    cout << charge(2)              << '\n';
+    cout << charge(2.0f)           << '\n';
+    cout << charge(2.5)            << '\n';
+    cout << charge(2.5, true)      << '\n';
+    cout << charge(Parcel{2.5, true, true}) << '\n';
+}
+Q4: A class with an array inside it:----------------------------------------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+class SavingsAccount {
+    int  accNo;
+    long balance;
+    long tx[10];       // last 10 transactions, PRIVATE so nobody can corrupt it
+    int  count;
+
+public:
+    SavingsAccount(int no, long opening) : accNo(no), balance(opening), count(0) {}
+    long getBalance() const { return balance; }     // defined inside the class
+
+    void deposit(long amt);                         // defined outside with ::
+    bool withdraw(long amt);
+    void miniStatement() const;
+
+private:
+    void record(long amount);
+};
+
+void SavingsAccount::record(long amount)
+{
+    if (count == 10) {                              // the 11th transaction arrives
+        for (int i = 1; i < 10; i++) tx[i - 1] = tx[i];   // shift left, dropping the oldest
+        tx[9] = amount;
+    } else tx[count++] = amount;
+}
+void SavingsAccount::deposit(long amt) { balance += amt; record(+amt); }
+bool SavingsAccount::withdraw(long amt)
+{
+    if (amt > balance) return false;
+    balance -= amt; record(-amt); return true;
+}
+void SavingsAccount::miniStatement() const
+{
+    cout << "Account " << accNo << " mini-statement\n";
+    for (int i = 0; i < count; i++)
+        cout << "  " << (tx[i] >= 0 ? "Deposit   " : "Withdrawal") << " " << (tx[i] >= 0 ? tx[i] : -tx[i]) << '\n';
+    cout << "  Balance: " << balance << '\n';
+}
+
+int main()
+{
+    SavingsAccount a(1001, 5000);
+    for (int i = 1; i <= 8; i++) a.deposit(i * 100);
+    a.withdraw(250);
+    a.withdraw(100);
+    a.deposit(999);          // the 11th transaction: the oldest (100) is discarded
+    a.miniStatement();
+}
+#Q5: Static members and arrays of objects:----------------------------------------------------------------------------------------
+explicit BusTicket(const std::string& n) : seat(0), name(n)
+{
+    if (issued < CAPACITY) {   // TODO 1: seats left?
+        issued++;
+        seat = issued;         // take the next seat number
+    }                          // otherwise seat stays 0 = waiting list
+}
+static int count() { return issued; }   // TODO 2
+
+#include <iostream>
+#include <cstdlib>
+Q6: Friend and inline functions:------------------------------------------------------------------------------------------------------------
+class Time {
+    int h, m;
+public:
+    Time(int hh, int mm) : h(hh), m(mm) {}
+    friend int minutesBetween(const Time& a, const Time& b);
+    friend bool earlier(const Time& a, const Time& b);
+};
+
+int minutesBetween(const Time& a, const Time& b)       // TODO 1
+{ return std::abs((a.h * 60 + a.m) - (b.h * 60 + b.m)); }
+
+bool earlier(const Time& a, const Time& b)             // TODO 2
+{ return (a.h * 60 + a.m) < (b.h * 60 + b.m); }
+
+int main()
+{
+    Time departure(9, 45), arrival(13, 10);
+    std::cout << minutesBetween(departure, arrival) << ' ' << std::boolalpha << earlier(arrival, departure) << '\n';
+
+    Time same1(7, 30), same2(7, 30), beforeNoon(11, 50), afterNoon(12, 10);
+    std::cout << "same time twice : " << minutesBetween(same1, same2) << ' ' << earlier(same1, same2) << '\n';
+    std::cout << "across noon     : " << minutesBetween(beforeNoon, afterNoon) << ' ' << earlier(beforeNoon, afterNoon) << '\n';
+}
+// Q7: Original (shifting array) vs Redesign (circular buffer) ---------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <chrono>
+using namespace std;
+using namespace std::chrono;
+
+// ORIGINAL: when full, shift every element one place left -> O(CAP) per transaction
+template <int CAP>
+class ShiftStatement {
+    long tx[CAP];
+    int count = 0;
+public:
+    void add(long amount)
+    {
+        if (count == CAP) {
+            for (int i = 1; i < CAP; i++) tx[i - 1] = tx[i];
+            tx[CAP - 1] = amount;
+        } else tx[count++] = amount;
+    }
+    long get(int i) const { return tx[i]; }          // i = 0 is the oldest
+    int size() const { return count; }
+};
+
+// REDESIGN: remember where the oldest item is; overwrite it -> O(1) per transaction
+template <int CAP>
+class RingStatement {
+    long tx[CAP];
+    int start = 0, count = 0;
+public:
+    void add(long amount)
+    {
+        if (count < CAP) tx[(start + count++) % CAP] = amount;
+        else { tx[start] = amount; start = (start + 1) % CAP; }
+    }
+    long get(int i) const { return tx[(start + i) % CAP]; }   // i = 0 is the oldest
+    int size() const { return count; }
+};
+
+template <class S>
+double run(S& s, long n, long& checksum)
+{
+    auto t0 = steady_clock::now();
+    for (long i = 1; i <= n; i++) s.add(i);
+    auto t1 = steady_clock::now();
+    checksum = 0;
+    for (int i = 0; i < s.size(); i++) checksum += s.get(i) * (i + 1);   // order-sensitive
+    return duration<double, milli>(t1 - t0).count();
+}
+
+template <int CAP>
+void test(long n)
+{
+    static ShiftStatement<CAP> a;
+    static RingStatement<CAP>  b;
+    long ca, cb;
+    double ta = run(a, n, ca), tb = run(b, n, cb);
+    cout << "CAP=" << CAP << "  shift: " << ta << " ms   ring: " << tb << " ms   same result: "
+         << (ca == cb ? "yes" : "NO") << '\n';
+}
+
+int main()
+{
+    const long N = 200000;                    // 200,000 transactions
+    cout << "adding " << N << " transactions\n";
+    test<10>(N);
+    test<100>(N);
+    test<1000>(N);
+    test<10000>(N);
+}
