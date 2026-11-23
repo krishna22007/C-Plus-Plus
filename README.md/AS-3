@@ -1,0 +1,564 @@
+#include <iostream>
+#include <string>
+using namespace std;
+class Book {
+    string title;
+    int copies;
+
+public:
+    Book() : Book("Unknown", 0) {
+    }
+
+    Book(string t) : Book(t, 0) {
+    }
+
+    Book(string t, int c) : title(t), copies(c < 0 ? 0 : c) {
+    }
+
+    void display() {
+        cout << "Title: " << title << endl;
+        cout << "Copies: " << copies << endl;
+    }
+};
+
+int main() {
+    Book b1;
+    Book b2("C++ Programming");
+    Book b3("Java Programming", 5);
+
+    cout << "Default Book" << endl;
+    b1.display();
+
+    cout << "\nDonated Book" << endl;
+    b2.display();
+
+    cout << "\nComplete Book" << endl;
+    b3.display();
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Prescription {
+    int n;
+    string* medicines;
+
+public:
+    Prescription(int count) : n(count) {
+        medicines = new string[n];
+    }
+
+    Prescription(const Prescription& p) : n(p.n) {
+        medicines = new string[n];
+
+        for (int i = 0; i < n; i++) {
+            medicines[i] = p.medicines[i];
+        }
+    }
+
+    Prescription& operator=(const Prescription& p) {
+        if (this != &p) {
+            string* temp = new string[p.n];
+
+            for (int i = 0; i < p.n; i++) {
+                temp[i] = p.medicines[i];
+            }
+
+            delete[] medicines;
+            medicines = temp;
+            n = p.n;
+        }
+
+        return *this;
+    }
+
+    ~Prescription() {
+        delete[] medicines;
+    }
+
+    void set(int i, const string& m) {
+        medicines[i] = m;
+    }
+
+    string get(int i) const {
+        return medicines[i];
+    }
+};
+
+int main() {
+    Prescription p(2);
+
+    p.set(0, "Paracetamol");
+    p.set(1, "ORS");
+
+    Prescription q = p;
+
+    q.set(1, "Cetirizine");
+
+    Prescription r(1);
+    r = p;
+
+    p.set(0, "Ibuprofen");
+
+    cout << p.get(0) << " " << p.get(1) << " | ";
+    cout << q.get(0) << " " << q.get(1) << " | ";
+    cout << r.get(0) << " " << r.get(1) << endl;
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+
+#include <iostream>
+using namespace std;
+
+class Event {
+    int rows;
+    int seats;
+    char** map;
+
+public:
+    Event(int r, int s) : rows(r), seats(s) {
+        map = new char*[rows];
+
+        for (int i = 0; i < rows; i++) {
+            map[i] = new char[seats];
+
+            for (int j = 0; j < seats; j++) {
+                map[i][j] = 'O';
+            }
+        }
+
+        cout << "Event created" << endl;
+    }
+
+    void book(int r, int s) {
+        if (r >= 0 && r < rows && s >= 0 && s < seats) {
+            map[r][s] = 'B';
+        }
+    }
+
+    void cancel(int r, int s) {
+        if (r >= 0 && r < rows && s >= 0 && s < seats) {
+            map[r][s] = 'O';
+        }
+    }
+
+    void display() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < seats; j++) {
+                cout << map[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    ~Event() {
+        for (int i = 0; i < rows; i++) {
+            delete[] map[i];
+        }
+
+        delete[] map;
+
+        cout << "Event closed" << endl;
+    }
+};
+
+int main() {
+    Event e(2, 3);
+
+    e.book(0, 1);
+    e.book(1, 2);
+
+    cout << "Seat Status:" << endl;
+    e.display();
+
+    e.cancel(0, 1);
+
+    cout << "After Cancellation:" << endl;
+    e.display();
+
+    Event* e2 = new Event(1, 2);
+    delete e2;
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+class Money
+{
+    int paise;
+
+public:
+    Money()
+    {
+        paise = 0;
+    }
+
+    Money(int p)
+    {
+        paise = p;
+    }
+
+    Money operator+(Money m)
+    {
+        return Money(paise + m.paise);
+    }
+
+    Money operator-(Money m)
+    {
+        return Money(paise - m.paise);
+    }
+
+    Money& operator+=(Money m)
+    {
+        paise += m.paise;
+        return *this;
+    }
+
+    bool operator==(Money m)
+    {
+        return paise == m.paise;
+    }
+
+    bool operator<(Money m)
+    {
+        return paise < m.paise;
+    }
+
+    friend ostream& operator<<(ostream &out, Money m)
+    {
+        out << "Rs " << m.paise / 100 << ".";
+
+        if (m.paise % 100 < 10)
+            out << "0";
+
+        out << m.paise % 100;
+        return out;
+    }
+
+    friend istream& operator>>(istream &in, Money &m)
+    {
+        cout << "Enter amount in paise: ";
+        in >> m.paise;
+        return in;
+    }
+};
+
+int main()
+{
+    Money m1(10000);
+    Money m2(10000);
+
+    Money m3 = m1 + m2;
+
+    cout << "Total: " << m3 << endl;
+    cout << boolalpha << (m1 == m2) << endl;
+
+    m1 += m2;
+    cout << "After addition: " << m1 << endl;
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+class Time
+{
+    int seconds;
+
+public:
+    Time(int s = 0)
+    {
+        seconds = s;
+    }
+
+    Time& operator++()
+    {
+        ++seconds;
+        return *this;
+    }
+
+    Time operator++(int)
+    {
+        Time temp = *this;
+        seconds++;
+        return temp;
+    }
+
+    bool operator==(Time t)
+    {
+        return seconds == t.seconds;
+    }
+
+    bool operator<(Time t)
+    {
+        return seconds < t.seconds;
+    }
+
+    void display()
+    {
+        cout << seconds << endl;
+    }
+};
+
+class Playlist
+{
+    string songs[5];
+
+public:
+    Playlist()
+    {
+        songs[0] = "Song 1";
+        songs[1] = "Song 2";
+        songs[2] = "Song 3";
+        songs[3] = "Song 4";
+        songs[4] = "Song 5";
+    }
+
+    string& operator[](int index)
+    {
+        if (index < 0 || index >= 5)
+        {
+            cout << "Invalid index" << endl;
+            return songs[0];
+        }
+
+        return songs[index];
+    }
+
+    const string& operator[](int index) const
+    {
+        if (index < 0 || index >= 5)
+        {
+            return songs[0];
+        }
+
+        return songs[index];
+    }
+};
+
+int main()
+{
+    Time t1(5);
+
+    t1.display();
+
+    Time t2 = t1++;
+    t2.display();
+
+    ++t1;
+    t1.display();
+
+    Playlist p;
+
+    cout << p[0] << endl;
+
+    p[1] = "Favorite Song";
+
+    cout << p[1] << endl;
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+class Text
+{
+    char *data;
+
+public:
+    Text(const char *str = "")
+    {
+        data = new char[strlen(str) + 1];
+        strcpy(data, str);
+    }
+
+    Text(const Text &t)
+    {
+        data = new char[strlen(t.data) + 1];
+        strcpy(data, t.data);
+    }
+
+    Text& operator=(const Text &t)
+    {
+        if (this != &t)
+        {
+            delete[] data;
+
+            data = new char[strlen(t.data) + 1];
+            strcpy(data, t.data);
+        }
+
+        return *this;
+    }
+
+    Text operator+(const Text &t)
+    {
+        char *temp = new char[strlen(data) + strlen(t.data) + 1];
+
+        strcpy(temp, data);
+        strcat(temp, t.data);
+
+        Text result(temp);
+
+        delete[] temp;
+
+        return result;
+    }
+
+    bool operator==(const Text &t)
+    {
+        return strcmp(data, t.data) == 0;
+    }
+
+    bool operator!=(const Text &t)
+    {
+        return strcmp(data, t.data) != 0;
+    }
+
+    friend ostream& operator<<(ostream &out, const Text &t)
+    {
+        out << t.data;
+        return out;
+    }
+
+    ~Text()
+    {
+        delete[] data;
+    }
+};
+
+int main()
+{
+    Text t1("Hello ");
+    Text t2("World");
+
+    Text t3 = t1 + t2;
+
+    cout << "Combined Text: " << t3 << endl;
+
+    cout << boolalpha;
+    cout << "Equal: " << (t1 == t2) << endl;
+    cout << "Not Equal: " << (t1 != t2) << endl;
+
+    Text t4;
+    t4 = t3;
+
+    cout << "Copied Text: " << t4 << endl;
+
+    return 0;
+}
+------------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+class Complex
+{
+    float real;
+    float imag;
+
+public:
+    Complex()
+    {
+        real = 0;
+        imag = 0;
+    }
+
+    Complex(float r, float i)
+    {
+        real = r;
+        imag = i;
+    }
+
+    Complex operator+(Complex c)
+    {
+        return Complex(real + c.real, imag + c.imag);
+    }
+
+    Complex operator-(Complex c)
+    {
+        return Complex(real - c.real, imag - c.imag);
+    }
+
+    Complex operator*(Complex c)
+    {
+        return Complex(
+            real * c.real - imag * c.imag,
+            real * c.imag + imag * c.real
+        );
+    }
+
+    Complex operator/(Complex c)
+    {
+        float denominator = c.real * c.real + c.imag * c.imag;
+
+        if (denominator == 0)
+        {
+            cout << "Division by zero is not possible" << endl;
+            return Complex(0, 0);
+        }
+
+        return Complex(
+            (real * c.real + imag * c.imag) / denominator,
+            (imag * c.real - real * c.imag) / denominator
+        );
+    }
+
+    bool operator==(Complex c)
+    {
+        return real == c.real && imag == c.imag;
+    }
+
+    float magnitude()
+    {
+        return sqrt(real * real + imag * imag);
+    }
+
+    friend ostream& operator<<(ostream &out, Complex c)
+    {
+        out << c.real;
+
+        if (c.imag >= 0)
+            out << " + " << c.imag << "i";
+        else
+            out << " - " << -c.imag << "i";
+
+        return out;
+    }
+};
+
+int main()
+{
+    Complex c1(4, 3);
+    Complex c2(2, 1);
+
+    Complex sum = c1 + c2;
+    Complex difference = c1 - c2;
+    Complex product = c1 * c2;
+    Complex division = c1 / c2;
+
+    cout << "First Impedance: " << c1 << endl;
+    cout << "Second Impedance: " << c2 << endl;
+
+    cout << "Addition: " << sum << endl;
+    cout << "Subtraction: " << difference << endl;
+    cout << "Multiplication: " << product << endl;
+    cout << "Division: " << division << endl;
+
+    cout << "Magnitude: " << c1.magnitude() << endl;
+
+    cout << boolalpha;
+    cout << "Equal: " << (c1 == c2) << endl;
+
+    return 0;
+}
