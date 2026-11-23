@@ -1,0 +1,1003 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Bill {
+protected:
+    string patient;
+
+public:
+    Bill(string p) {
+        patient = p;
+    }
+
+    virtual double total() const = 0;
+    virtual string type() const = 0;
+
+    virtual void print() const {
+        cout << type() << " Bill - " << patient << ": " << total() << endl;
+    }
+
+    virtual ~Bill() {}
+};
+
+class OutPatientBill : public Bill {
+    double consultation, tests;
+
+public:
+    OutPatientBill(string p, double c, double t) : Bill(p) {
+        consultation = c;
+        tests = t;
+    }
+
+    double total() const override {
+        return consultation + tests;
+    }
+
+    string type() const override {
+        return "OutPatient";
+    }
+};
+
+class InPatientBill : public Bill {
+    int days;
+    double roomCharge, procedure, medicines;
+
+public:
+    InPatientBill(string p, int d, double r, double pr, double m) : Bill(p) {
+        days = d;
+        roomCharge = r;
+        procedure = pr;
+        medicines = m;
+    }
+
+    double total() const override {
+        return days * roomCharge + procedure + medicines;
+    }
+
+    string type() const override {
+        return "InPatient";
+    }
+};
+
+class DayCareBill : public Bill {
+    double packagePrice;
+
+public:
+    DayCareBill(string p, double price) : Bill(p) {
+        packagePrice = price;
+    }
+
+    double total() const override {
+        return packagePrice;
+    }
+
+    string type() const override {
+        return "DayCare";
+    }
+};
+
+class EmergencyBill : public Bill {
+    double baseCharge, hourlyCharge;
+    int hours;
+
+public:
+    EmergencyBill(string p, double b, double h, int hr) : Bill(p) {
+        baseCharge = b;
+        hourlyCharge = h;
+        hours = hr;
+    }
+
+    double total() const override {
+        return baseCharge + hourlyCharge * hours;
+    }
+
+    string type() const override {
+        return "Emergency";
+    }
+};
+
+int main() {
+    Bill* bills[4];
+
+    bills[0] = new OutPatientBill("Ravi", 500, 1200);
+    bills[1] = new InPatientBill("Meena", 3, 2500, 40000, 5000);
+    bills[2] = new DayCareBill("Arun", 15000);
+    bills[3] = new EmergencyBill("Priya", 2000, 500, 4);
+
+    double dayTotal = 0;
+
+    for (int i = 0; i < 4; i++) {
+        bills[i]->print();
+        dayTotal += bills[i]->total();
+    }
+
+    cout << "Total Hospital Billing: " << dayTotal << endl;
+
+    for (int i = 0; i < 4; i++) {
+        delete bills[i];
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+class Bill {
+public:
+    virtual ~Bill() {
+        cout << "~Bill ";
+    }
+
+    virtual double total() const = 0;
+
+    void show() const {
+        cout << total() << " ";
+    }
+};
+
+class OPBill : public Bill {
+public:
+    ~OPBill() override {
+        cout << "~OPBill ";
+    }
+
+    double total() const override {
+        return 500;
+    }
+};
+
+class IPBill : public Bill {
+public:
+    ~IPBill() override {
+        cout << "~IPBill ";
+    }
+
+    double total() const override {
+        return 1500;
+    }
+};
+
+int main() {
+    Bill* b1 = new OPBill;
+    Bill* b2 = new IPBill;
+
+    b1->show();
+    delete b1;
+
+    cout << endl;
+
+    b2->show();
+    delete b2;
+
+    cout << endl;
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Bill {
+protected:
+    string patient;
+    double amount;
+
+public:
+    Bill(string p, double a) {
+        patient = p;
+        amount = a;
+    }
+
+    virtual double total() const {
+        return amount;
+    }
+
+    string getPatient() const {
+        return patient;
+    }
+
+    virtual ~Bill() {}
+};
+
+class Payer {
+public:
+    virtual double amountCovered(const Bill& bill) const = 0;
+    virtual string type() const = 0;
+
+    virtual ~Payer() {}
+};
+
+class SelfPay : public Payer {
+public:
+    double amountCovered(const Bill& bill) const override {
+        return bill.total();
+    }
+
+    string type() const override {
+        return "Self Pay";
+    }
+};
+
+class Insurance : public Payer {
+    double coverLimit;
+    double coPayment;
+
+public:
+    Insurance(double limit, double percentage) {
+        coverLimit = limit;
+        coPayment = percentage;
+    }
+
+    double amountCovered(const Bill& bill) const override {
+        double covered = bill.total() * (1 - coPayment / 100);
+
+        if (covered > coverLimit) {
+            covered = coverLimit;
+        }
+
+        return covered;
+    }
+
+    string type() const override {
+        return "Insurance";
+    }
+};
+
+class GovernmentScheme : public Payer {
+    double packageRate;
+
+public:
+    GovernmentScheme(double rate) {
+        packageRate = rate;
+    }
+
+    double amountCovered(const Bill& bill) const override {
+        if (bill.total() < packageRate) {
+            return bill.total();
+        }
+
+        return packageRate;
+    }
+
+    string type() const override {
+        return "Government Scheme";
+    }
+};
+
+class CorporatePayer : public Payer {
+    double percentage;
+
+public:
+    CorporatePayer(double p) {
+        percentage = p;
+    }
+
+    double amountCovered(const Bill& bill) const override {
+        return bill.total() * percentage / 100;
+    }
+
+    string type() const override {
+        return "Corporate Payer";
+    }
+};
+
+int main() {
+    Bill bill("Ravi", 50000);
+
+    Payer* payers[4];
+
+    payers[0] = new SelfPay();
+    payers[1] = new Insurance(40000, 20);
+    payers[2] = new GovernmentScheme(30000);
+    payers[3] = new CorporatePayer(75);
+
+    cout << "Patient: " << bill.getPatient() << endl;
+    cout << "Bill Amount: " << bill.total() << endl;
+
+    for (int i = 0; i < 4; i++) {
+        cout << payers[i]->type() << " Covers: "
+             << payers[i]->amountCovered(bill) << endl;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        delete payers[i];
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <stdexcept>
+#include <string>
+using namespace std;
+
+class BillingError : public runtime_error {
+public:
+    BillingError(string message) : runtime_error(message) {}
+};
+
+class ClaimError : public BillingError {
+public:
+    ClaimError(string message) : BillingError(message) {}
+};
+
+class InvalidCharge : public BillingError {
+public:
+    InvalidCharge(string message) : BillingError(message) {}
+};
+
+class PatientNotFound : public BillingError {
+public:
+    PatientNotFound(string message) : BillingError(message) {}
+};
+
+class UnknownPackage : public BillingError {
+public:
+    UnknownPackage(string message) : BillingError(message) {}
+};
+
+class Guard {
+    string name;
+
+public:
+    Guard(string n) {
+        name = n;
+    }
+
+    ~Guard() noexcept {
+        cout << "Releasing " << name << endl;
+    }
+};
+
+void validateBill(double amount) {
+    if (amount < 0) {
+        throw InvalidCharge("Negative bill amount");
+    }
+
+    if (amount > 1000000) {
+        throw ClaimError("Bill amount exceeds limit");
+    }
+
+    cout << "Bill is valid" << endl;
+}
+
+void processBill(double amount) {
+    Guard resource("Bill Resource");
+
+    try {
+        validateBill(amount);
+    }
+    catch (const BillingError& e) {
+        cout << "Audit Log: " << e.what() << endl;
+        throw;
+    }
+}
+
+int main() {
+    double amounts[] = {5000, -100, 1500000};
+
+    for (int i = 0; i < 3; i++) {
+        try {
+            processBill(amounts[i]);
+            cout << "Bill processed successfully" << endl;
+        }
+        catch (const BillingError& e) {
+            cout << "Billing Error: " << e.what() << endl;
+        }
+        catch (const exception& e) {
+            cout << "General Error: " << e.what() << endl;
+        }
+        catch (...) {
+            cout << "Unknown Error" << endl;
+        }
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Bill {
+protected:
+    string patient;
+
+public:
+    Bill(string p) : patient(p) {}
+
+    virtual double total() const = 0;
+    virtual string type() const = 0;
+
+    void print() const {
+        cout << type() << " " << patient << ": " << total() << endl;
+    }
+
+    virtual ~Bill() {}
+};
+
+class OutPatient : public Bill {
+    double consultation, tests;
+
+public:
+    OutPatient(string p, double c, double t)
+        : Bill(p), consultation(c), tests(t) {}
+
+    double total() const override {
+        return consultation + tests;
+    }
+
+    string type() const override {
+        return "OP";
+    }
+};
+
+class InPatient : public Bill {
+    int days;
+    double perDay, surgery;
+
+public:
+    InPatient(string p, int d, double rate, double s)
+        : Bill(p), days(d), perDay(rate), surgery(s) {}
+
+    double total() const override {
+        return days * perDay + surgery;
+    }
+
+    string type() const override {
+        return "IP";
+    }
+};
+
+class DayCare : public Bill {
+    double packagePrice;
+
+public:
+    DayCare(string p, double price)
+        : Bill(p), packagePrice(price) {}
+
+    double total() const override {
+        return packagePrice;
+    }
+
+    string type() const override {
+        return "DC";
+    }
+};
+
+class Emergency : public Bill {
+    double baseCharge, hourlyCharge;
+    int hours;
+
+public:
+    Emergency(string p, double b, double h, int hr)
+        : Bill(p), baseCharge(b), hourlyCharge(h), hours(hr) {}
+
+    double total() const override {
+        return baseCharge + hourlyCharge * hours;
+    }
+
+    string type() const override {
+        return "EM";
+    }
+};
+
+int main() {
+    Bill* bills[] = {
+        new OutPatient("Ravi", 500, 1200),
+        new InPatient("Meena", 3, 2500, 40000),
+        new DayCare("Arun", 15000),
+        new Emergency("Priya", 2000, 500, 4)
+    };
+
+    double sum = 0;
+
+    for (Bill* b : bills) {
+        b->print();
+        sum += b->total();
+    }
+
+    cout << "Total " << sum << endl;
+
+    for (Bill* b : bills) {
+        delete b;
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+class ClaimError : public runtime_error {
+public:
+    using runtime_error::runtime_error;
+};
+
+double approve(double billed, double cover) {
+    if (billed < 0 || cover < 0) {
+        throw invalid_argument("negative amount");
+    }
+
+    if (billed > cover) {
+        throw ClaimError("exceeds cover");
+    }
+
+    return billed;
+}
+
+double settle(double billed, double cover) {
+    try {
+        return approve(billed, cover);
+    }
+    catch (const ClaimError& e) {
+        cout << "audit: " << e.what() << endl;
+        throw;
+    }
+}
+
+void validate(double amount) {
+    if (amount < 0) {
+        throw invalid_argument("negative");
+    }
+
+    if (amount > 1000000) {
+        throw out_of_range("too large");
+    }
+
+    cout << "ok ";
+}
+
+void process(double amount) {
+    try {
+        validate(amount);
+    }
+    catch (const out_of_range& e) {
+        cout << "[log " << e.what() << "] ";
+        throw;
+    }
+}
+
+int main() {
+    double cases[][2] = {
+        {40000, 50000},
+        {60000, 50000},
+        {-1, 50000}
+    };
+
+    for (auto& c : cases) {
+        try {
+            double paid = settle(c[0], c[1]);
+            cout << "approved " << paid << endl;
+        }
+        catch (const ClaimError& e) {
+            cout << "claim rejected: " << e.what() << endl;
+        }
+        catch (const exception& e) {
+            cout << "error: " << e.what() << endl;
+        }
+    }
+
+    cout << "Validation Tests" << endl;
+
+    for (double amount : {100.0, -5.0, 2000000.0}) {
+        try {
+            process(amount);
+            cout << "done ";
+        }
+        catch (const exception& e) {
+            cout << "caught " << e.what() << " ";
+        }
+    }
+
+    cout << endl;
+
+    try {
+        int* data = new int[1000000000000000000ULL];
+        delete[] data;
+    }
+    catch (const bad_alloc& e) {
+        cout << "Memory allocation failed" << endl;
+    }
+    catch (const exception& e) {
+        cout << "Allocation error: " << e.what() << endl;
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <vector>
+#include <variant>
+#include <chrono>
+#include <stdexcept>
+using namespace std;
+using namespace chrono;
+
+class Bill {
+public:
+    virtual double total() const = 0;
+    virtual ~Bill() {}
+};
+
+class OutPatient : public Bill {
+    double consultation, tests;
+
+public:
+    OutPatient(double c, double t) {
+        consultation = c;
+        tests = t;
+    }
+
+    double total() const override {
+        return consultation + tests;
+    }
+};
+
+class InPatient : public Bill {
+    int days;
+    double rate, surgery;
+
+public:
+    InPatient(int d, double r, double s) {
+        days = d;
+        rate = r;
+        surgery = s;
+    }
+
+    double total() const override {
+        return days * rate + surgery;
+    }
+};
+
+struct SimpleBill {
+    int type;
+    double a, b, c;
+
+    double total() const {
+        if (type == 1) {
+            return a + b;
+        }
+
+        return a * b + c;
+    }
+};
+
+using VariantBill = variant<OutPatient, InPatient>;
+
+double variantTotal(const VariantBill& b) {
+    return visit([](const auto& bill) {
+        return bill.total();
+    }, b);
+}
+
+int main() {
+    vector<Bill*> virtualBills;
+    vector<SimpleBill> switchBills;
+    vector<VariantBill> variantBills;
+
+    int sizes[] = {1000, 1000000, 10000000};
+
+    for (int n : sizes) {
+        virtualBills.clear();
+        switchBills.clear();
+        variantBills.clear();
+
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                virtualBills.push_back(new OutPatient(500, 1200));
+                switchBills.push_back({1, 500, 1200, 0});
+                variantBills.push_back(OutPatient(500, 1200));
+            } else {
+                virtualBills.push_back(new InPatient(3, 2500, 40000));
+                switchBills.push_back({2, 3, 2500, 40000});
+                variantBills.push_back(InPatient(3, 2500, 40000));
+            }
+        }
+
+        double virtualSum = 0;
+        double switchSum = 0;
+        double variantSum = 0;
+
+        auto start = steady_clock::now();
+
+        for (Bill* b : virtualBills) {
+            virtualSum += b->total();
+        }
+
+        auto end = steady_clock::now();
+        auto virtualTime = duration_cast<milliseconds>(end - start).count();
+
+        start = steady_clock::now();
+
+        for (const SimpleBill& b : switchBills) {
+            switchSum += b.total();
+        }
+
+        end = steady_clock::now();
+        auto switchTime = duration_cast<milliseconds>(end - start).count();
+
+        start = steady_clock::now();
+
+        for (const VariantBill& b : variantBills) {
+            variantSum += variantTotal(b);
+        }
+
+        end = steady_clock::now();
+        auto variantTime = duration_cast<milliseconds>(end - start).count();
+
+        cout << "Number of Bills: " << n << endl;
+        cout << "Virtual Total: " << virtualSum << endl;
+        cout << "Switch Total: " << switchSum << endl;
+        cout << "Variant Total: " << variantSum << endl;
+        cout << "Virtual Time: " << virtualTime << " ms" << endl;
+        cout << "Switch Time: " << switchTime << " ms" << endl;
+        cout << "Variant Time: " << variantTime << " ms" << endl;
+        cout << endl;
+
+        for (Bill* b : virtualBills) {
+            delete b;
+        }
+    }
+
+    int invalidPercentages[] = {0, 1, 50};
+    const int count = 1000000;
+
+    for (int percentage : invalidPercentages) {
+        int invalidCount = count * percentage / 100;
+        int returnErrors = 0;
+        int exceptionErrors = 0;
+        double amount = 500;
+
+        auto start = steady_clock::now();
+
+        for (int i = 0; i < count; i++) {
+            if (i < invalidCount) {
+                returnErrors++;
+            } else {
+                amount += 1;
+            }
+        }
+
+        auto end = steady_clock::now();
+        auto returnTime = duration_cast<milliseconds>(end - start).count();
+
+        start = steady_clock::now();
+
+        for (int i = 0; i < count; i++) {
+            try {
+                if (i < invalidCount) {
+                    throw runtime_error("Invalid bill");
+                }
+
+                amount += 1;
+            }
+            catch (const exception&) {
+                exceptionErrors++;
+            }
+        }
+
+        end = steady_clock::now();
+        auto exceptionTime = duration_cast<milliseconds>(end - start).count();
+
+        cout << "Invalid Bills: " << percentage << "%" << endl;
+        cout << "Return Code Errors: " << returnErrors << endl;
+        cout << "Exception Errors: " << exceptionErrors << endl;
+        cout << "Return Code Time: " << returnTime << " ms" << endl;
+        cout << "Exception Time: " << exceptionTime << " ms" << endl;
+        cout << endl;
+    }
+
+    return 0;
+}
+--------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <string>
+#include <vector>
+#include <stdexcept>
+using namespace std;
+
+class Bill {
+protected:
+    string patient;
+
+public:
+    Bill(string p) : patient(p) {}
+
+    virtual double total() const = 0;
+    virtual string type() const = 0;
+
+    virtual void print() const {
+        cout << type() << " - " << patient
+             << ": " << total() << endl;
+    }
+
+    virtual ~Bill() {}
+};
+
+class OutPatient : public Bill {
+    double consultation, tests;
+
+public:
+    OutPatient(string p, double c, double t)
+        : Bill(p), consultation(c), tests(t) {}
+
+    double total() const override {
+        return consultation + tests;
+    }
+
+    string type() const override {
+        return "OutPatient";
+    }
+};
+
+class InPatient : public Bill {
+    int days;
+    double rate, surgery;
+
+public:
+    InPatient(string p, int d, double r, double s)
+        : Bill(p), days(d), rate(r), surgery(s) {}
+
+    double total() const override {
+        return days * rate + surgery;
+    }
+
+    string type() const override {
+        return "InPatient";
+    }
+};
+
+class DayCare : public Bill {
+    double packagePrice;
+
+public:
+    DayCare(string p, double price)
+        : Bill(p), packagePrice(price) {}
+
+    double total() const override {
+        return packagePrice;
+    }
+
+    string type() const override {
+        return "DayCare";
+    }
+};
+
+class MaternityBill : public Bill {
+    double deliveryCharge, roomCharge;
+
+public:
+    MaternityBill(string p, double d, double r)
+        : Bill(p), deliveryCharge(d), roomCharge(r) {}
+
+    double total() const override {
+        return deliveryCharge + roomCharge;
+    }
+
+    string type() const override {
+        return "Maternity";
+    }
+};
+
+class Payer {
+public:
+    virtual double amountCovered(const Bill& bill) const = 0;
+    virtual string name() const = 0;
+
+    virtual ~Payer() {}
+};
+
+class SelfPay : public Payer {
+public:
+    double amountCovered(const Bill& bill) const override {
+        return bill.total();
+    }
+
+    string name() const override {
+        return "Self Pay";
+    }
+};
+
+class Insurance : public Payer {
+    double limit;
+
+public:
+    Insurance(double l) : limit(l) {}
+
+    double amountCovered(const Bill& bill) const override {
+        if (bill.total() < limit) {
+            return bill.total();
+        }
+
+        return limit;
+    }
+
+    string name() const override {
+        return "Insurance";
+    }
+};
+
+class CorporatePayer : public Payer {
+    double percentage;
+
+public:
+    CorporatePayer(double p) : percentage(p) {}
+
+    double amountCovered(const Bill& bill) const override {
+        return bill.total() * percentage / 100;
+    }
+
+    string name() const override {
+        return "Corporate Payer";
+    }
+};
+
+class BillingError : public runtime_error {
+public:
+    using runtime_error::runtime_error;
+};
+
+void validateBill(double amount) {
+    if (amount < 0) {
+        throw BillingError("Negative bill amount");
+    }
+
+    if (amount > 1000000) {
+        throw BillingError("Bill amount exceeds limit");
+    }
+}
+
+int main() {
+    vector<Bill*> bills;
+
+    bills.push_back(new OutPatient("Ravi", 500, 1200));
+    bills.push_back(new InPatient("Meena", 3, 2500, 40000));
+    bills.push_back(new DayCare("Arun", 15000));
+    bills.push_back(new MaternityBill("Priya", 45000, 10000));
+
+    Payer* payers[] = {
+        new SelfPay(),
+        new Insurance(40000),
+        new CorporatePayer(75)
+    };
+
+    try {
+        for (Bill* b : bills) {
+            validateBill(b->total());
+            b->print();
+
+            for (Payer* p : payers) {
+                cout << p->name() << " Covers: "
+                     << p->amountCovered(*b) << endl;
+            }
+
+            cout << endl;
+        }
+    }
+    catch (const BillingError& e) {
+        cout << "Billing Error: " << e.what() << endl;
+    }
+    catch (const exception& e) {
+        cout << "Error: " << e.what() << endl;
+    }
+    catch (...) {
+        cout << "Unknown Error" << endl;
+    }
+
+    for (Bill* b : bills) {
+        delete b;
+    }
+
+    for (Payer* p : payers) {
+        delete p;
+    }
+
+    cout << "All resources released successfully" << endl;
+
+    return 0;
+}
